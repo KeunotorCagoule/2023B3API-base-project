@@ -1,6 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { UsersModule } from './users/users.module';
+import { ProjectModule } from './project/project.module';
+import { ProjectUserModule } from './project-user/project-user.module';
+import { EventModule } from './event/event.module';
+import { User } from './users/entities/user.entity';
 
 @Module({
   imports: [
@@ -14,11 +19,15 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         username: configService.get('DB_USERNAME'),
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_NAME'),
-        entities: [],
+        entities: [User],
         synchronize: true,
       }),
       inject: [ConfigService],
     }),
+    UsersModule,
+    ProjectModule,
+    ProjectUserModule,
+    EventModule,
   ],
   controllers: [],
   providers: [],
