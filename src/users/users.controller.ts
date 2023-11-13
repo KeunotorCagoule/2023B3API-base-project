@@ -74,16 +74,17 @@ export class UsersController {
 
   @Get(':id')
   async findOne(@Req() req) {
-    // const user = await this.UserService.FindOneById(req.id);
-    // if (!user) {
-    //   throw new HttpException(error, HttpStatus.NOT_FOUND);
-    // }
-    // if (isString(req.id)) {
-    //   throw new HttpException(error, HttpStatus.BAD_REQUEST);
-    // }
-    return this.usersService.findOne(req.id);
+    if (!/[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}/.test(req.params.id)) {
+      throw new HttpException(error, HttpStatus.BAD_REQUEST);
+    }
+    const user = await this.usersService.findOne(req.params.id);
+    if (!user) {
+      throw new HttpException(error, HttpStatus.NOT_FOUND);
+    }
+    return user;
   }
 
+  @UsePipes(ValidationPipe)
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(+id, updateUserDto);
