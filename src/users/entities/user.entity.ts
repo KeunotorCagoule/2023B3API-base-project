@@ -11,7 +11,7 @@ export class User {
   @Column({ nullable: false, unique: true })
   public email!: string;
 
-  @Column({ nullable: false })
+  @Column({ nullable: false, select: false })
   public password!: string;
 
   @Column({ default: 'Employee' })

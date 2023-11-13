@@ -6,6 +6,7 @@ import { ProjectModule } from './project/project.module';
 import { ProjectUserModule } from './project-user/project-user.module';
 import { EventModule } from './event/event.module';
 import { User } from './users/entities/user.entity';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { User } from './users/entities/user.entity';
         port: +configService.get<number>('DB_PORT'),
         username: configService.get('DB_USERNAME'),
         password: configService.get('DB_PASSWORD'),
-        database: configService.get('DB_NAME'),
+        database: configService.get('DBm_NAME'),
         entities: [User],
         synchronize: true,
       }),
@@ -28,6 +29,7 @@ import { User } from './users/entities/user.entity';
     ProjectModule,
     ProjectUserModule,
     EventModule,
+    AuthModule,
   ],
   controllers: [],
   providers: [],
