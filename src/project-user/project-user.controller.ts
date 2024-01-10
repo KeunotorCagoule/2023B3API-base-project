@@ -1,37 +1,47 @@
-import { Controller, Get, Post, Body, Param, UseGuards, ValidationPipe, UsePipes, Req, UnauthorizedException } from '@nestjs/common';
-import { ProjectUserService } from './project-user.service';
-import { CreatedProjectUserDto } from './dto/create-project-user.dto';
-import { AuthGuard } from '@nestjs/passport';
+import {
+  Body,
+  Controller,
+  Get,
+  Inject,
+  Param,
+  Post,
+  Req,
+  UnauthorizedException,
+  forwardRef
+} from '@nestjs/common';
 import { UsersService } from '../users/users.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { CreatedProjectUserDto } from './dto/create-project-user.dto';
+import { ProjectUserService } from './project-user.service';
+import { AuthUser } from '../decorator/auth-user.decorator';
+import { User, UserRole } from '../users/entities/user.entity';
+import { ProjectUser } from './entities/project-user.entity';
 
-@UseGuards(JwtAuthGuard)
-@Controller('project-users')
+@Controller('/project-users')
 export class ProjectUserController {
-  constructor(private readonly projectUserService: ProjectUserService,
-    private userService: UsersService) {}
+  constructor(
+    private readonly projectUserService: ProjectUserService,
+    @Inject(forwardRef(() => UsersService))
+    private readonly userService: UsersService
+  ) {}
 
-  // @UseGuards(JwtAuthGuard)
-  @UsePipes(ValidationPipe)
   @Post()
-  async create(@Req() req, @Body() createProjectUserDto: CreatedProjectUserDto) {
-    const me = await this.userService.findUser(req.user.username);
-    if (me.role === "Employee") {
+  async create(
+    @AuthUser('role') role: UserRole,
+    @Body() dto: CreatedProjectUserDto
+  ): Promise<ProjectUser> {
+    if (role === 'Employee') {
       throw new UnauthorizedException();
     }
-    return this.projectUserService.create(createProjectUserDto);
+    return this.projectUserService.create(dto);
   }
 
-  // @UseGuards(JwtAuthGuard)
   @Get()
-  findAll() {
-    console.log("oui")
-    return this.projectUserService.findAll();
+  async findAll(@AuthUser() user: User): Promise<ProjectUser[]> {
+    return this.projectUserService.findByUser(user);
   }
 
-  // @UseGuards(JwtAuthGuard)
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  async findOne(@Param('id') id: string) {
     return this.projectUserService.findOne(id);
   }
 }

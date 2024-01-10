@@ -1,19 +1,23 @@
 import { Module, ValidationPipe } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
+import { AuthGuard } from './guard/auth.guard';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UsersModule } from './users/users.module';
-import { ProjectUserModule } from './project-user/project-user.module';
-import { EventModule } from './event/event.module';
-import { User } from './users/entities/user.entity';
 import { AuthModule } from './auth/auth.module';
-import { ProjectsModule } from './projects/projects.module';
+import { TransformInterceptor } from './interceptor/transform.interceptor';
 import { ProjectUser } from './project-user/entities/project-user.entity';
 import { Project } from './projects/entities/project.entity';
-import { APP_PIPE } from '@nestjs/core';
+import { User } from './users/entities/user.entity';
+import { UsersModule } from './users/users.module';
+import { ProjectUserModule } from './project-user/project-user.module';
+import { ProjectsModule } from './projects/projects.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: ['.env', '.env.local']
+    }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -24,22 +28,30 @@ import { APP_PIPE } from '@nestjs/core';
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_NAME'),
         entities: [User, ProjectUser, Project],
-        synchronize: true,
+        synchronize: true
       }),
-      inject: [ConfigService],
+      inject: [ConfigService]
     }),
     UsersModule,
     ProjectUserModule,
-    EventModule,
+    // EventModule,
     AuthModule,
     ProjectsModule,
   ],
   controllers: [],
   providers: [
     {
-      provide: APP_PIPE,
-      useValue: new ValidationPipe({ transform: true }),
+      provide: APP_GUARD,
+      useClass: AuthGuard
     },
-  ],
+    {
+      provide: APP_PIPE,
+      useValue: new ValidationPipe({ transform: true })
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: TransformInterceptor
+    }
+  ]
 })
 export class AppModule {}

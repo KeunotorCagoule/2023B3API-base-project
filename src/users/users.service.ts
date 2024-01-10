@@ -1,57 +1,39 @@
 import { Injectable } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { Repository } from 'typeorm';
-import { User } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
+import * as Argon2 from 'argon2';
+import { Repository } from 'typeorm';
+import { CreateUserDto } from './dto/create-user.dto';
+import { User } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
-    private usersRepository: Repository<User>,
+    private users: Repository<User>
   ) {}
 
-  async create(createUserDto: CreateUserDto) {
-    const newUser = {
-      ...createUserDto,
-      username: createUserDto.username,
-      email: createUserDto.email,
-      password: createUserDto.password,
-      role: createUserDto.role || 'Employee',
-    };
-    const user = this.usersRepository.create(newUser);
-
-    const insertedUser = await this.usersRepository.save(user);
-    delete insertedUser.password;
-    return insertedUser;
+  async create(dto: CreateUserDto): Promise<User> {
+    return this.users.save(
+      this.users.create({
+        ...dto,
+        password: await Argon2.hash(dto.password)
+      })
+    );
   }
 
-  findAll(): Promise<User[]> {
-    return this.usersRepository.find();
+  async findAll(): Promise<User[]> {
+    return this.users.find();
   }
 
-  findOne(id: string) {
-    return this.usersRepository.findOne({
-      where: {
-        id: id,
-      },
-    });
+  async findById(id: string): Promise<User | null> {
+    return this.users.findOneBy({ id });
   }
 
-  async findUser(username: string): Promise<User | null> {
-    return this.usersRepository.findOneBy({ username });
+  async findByUsername(username: string): Promise<User | null> {
+    return this.users.findOneBy({ username });
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    return this.usersRepository.findOneBy({ email });
-  }
-
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+    return this.users.findOneBy({ email });
   }
 }

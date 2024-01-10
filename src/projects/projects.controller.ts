@@ -1,51 +1,60 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Req } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Req,
+  Inject,
+  forwardRef,
+  UnauthorizedException,
+  HttpCode,
+  NotFoundException,
+  ForbiddenException
+} from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
-import { UpdateProjectDto } from './dto/update-project.dto';
-import { UsersService } from "../users/users.service";
-import { ProjectUserService } from "../project-user/project-user.service";
+import { UsersService } from '../users/users.service';
+import { ProjectUserService } from '../project-user/project-user.service';
+import { AuthUser } from '../decorator/auth-user.decorator';
+import { User, UserRole } from '../users/entities/user.entity';
+import { Project } from './entities/project.entity';
 
-@Controller('projects')
+@Controller('/projects')
 export class ProjectsController {
   constructor(
     private readonly projectsService: ProjectsService,
     private readonly userService: UsersService,
-    private readonly projectUserService: ProjectUserService,
-
-    ) {}
+    @Inject(forwardRef(() => ProjectUserService))
+    private readonly projectUserService: ProjectUserService
+  ) {}
 
   @Post()
-  create(@Body() createProjectDto: CreateProjectDto) {
-    return this.projectsService.create(createProjectDto);
-  }
-
-  @Get('')
-  async getAllProjects(@Req() req) {
-    const me = await this.userService.findUser(req.user.username);
-    if (me.role === "Employee") {
-      const myProjectUsers = await this.projectUserService.getAllByEmployeeId(me.id);
+  @HttpCode(201)
+  async create(
+    @AuthUser('role') role: UserRole,
+    @Body() dto: CreateProjectDto
+  ): Promise<Project> {
+    if (role !== UserRole.ADMIN) {
+      throw new UnauthorizedException();
     }
-    return await this.projectsService.GetAllProjects();
+    return this.projectsService.create(dto);
   }
 
   @Get()
-  findAll() {
-    return this.projectsService.findAll();
+  async getAllProjects(@AuthUser() user: User): Promise<Project[]> {
+    return this.projectsService.getByUser(user);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.projectsService.findOne(+id);
-  }
+  async findOne(@Param('id') id: string, @AuthUser() user: User): Promise<Project> {
+    const project = await this.projectsService.getById(id);
+    if (!project) throw new NotFoundException();
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateProjectDto: UpdateProjectDto) {
-    return this.projectsService.update(+id, updateProjectDto);
+    const projects = await this.projectUserService.findByUser(user);
+    if (!projects.some(p => p.projectId === project.id)) throw new ForbiddenException();
+    return project;
   }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.projectsService.remove(+id);
-  }
-
 }

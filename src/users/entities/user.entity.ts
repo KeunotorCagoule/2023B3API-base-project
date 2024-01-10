@@ -1,19 +1,27 @@
-import { Column, Entity, PrimaryGeneratedColumn, Unique } from 'typeorm';
+import { Exclude } from 'class-transformer';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+
+export enum UserRole {
+  ADMIN = 'Admin',
+  EMPLOYEE = 'Employee',
+  PROJECT_MANAGER = 'ProjectManager'
+}
 
 @Entity()
 export class User {
   @PrimaryGeneratedColumn('uuid')
-  public id!: string;
+  readonly id!: string;
 
   @Column({ nullable: false, unique: true })
-  public username!: string;
+  readonly username!: string;
 
   @Column({ nullable: false, unique: true })
-  public email!: string;
+  readonly email!: string;
 
-  @Column({ nullable: false, select: false })
-  public password!: string;
+  @Column({ nullable: false })
+  @Exclude({ toPlainOnly: true })
+  readonly password!: string;
 
-  @Column({ default: 'Employee' })
-  public role?: 'Employee' | 'Admin' | 'ProjectManager';
+  @Column({ default: UserRole.EMPLOYEE, nullable: false })
+  readonly role?: UserRole;
 }

@@ -1,17 +1,20 @@
-import { IsNotEmpty, IsUUID } from "class-validator";
+import { Type } from 'class-transformer';
+import { IsDate, IsNotEmpty, IsUUID } from 'class-validator';
 
 export class CreatedProjectUserDto {
-    @IsNotEmpty()
-    startDate: Date;
+  @Type(() => Date)
+  @IsDate()
+  startDate: Date;
 
-    @IsNotEmpty()
-    endDate: Date;
+  @Type(() => Date)
+  @IsDate()
+  endDate: Date;
 
-    @IsNotEmpty()
-    @IsUUID(4)
-    projectId: string;
+  @IsNotEmpty()
+  @IsUUID(4)
+  projectId: string;
 
-    @IsNotEmpty()
-    @IsUUID(4)
-    userId: string;
+  @IsNotEmpty()
+  @IsUUID(4)
+  userId: string;
 }
