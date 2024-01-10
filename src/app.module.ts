@@ -1,12 +1,15 @@
-import { Module } from '@nestjs/common';
+import { Module, ValidationPipe } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
-import { ProjectModule } from './project/project.module';
 import { ProjectUserModule } from './project-user/project-user.module';
 import { EventModule } from './event/event.module';
 import { User } from './users/entities/user.entity';
 import { AuthModule } from './auth/auth.module';
+import { ProjectsModule } from './projects/projects.module';
+import { ProjectUser } from './project-user/entities/project-user.entity';
+import { Project } from './projects/entities/project.entity';
+import { APP_PIPE } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -19,19 +22,24 @@ import { AuthModule } from './auth/auth.module';
         port: +configService.get<number>('DB_PORT'),
         username: configService.get('DB_USERNAME'),
         password: configService.get('DB_PASSWORD'),
-        database: configService.get('DBm_NAME'),
-        entities: [User],
+        database: configService.get('DB_NAME'),
+        entities: [User, ProjectUser, Project],
         synchronize: true,
       }),
       inject: [ConfigService],
     }),
     UsersModule,
-    ProjectModule,
     ProjectUserModule,
     EventModule,
     AuthModule,
+    ProjectsModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [
+    {
+      provide: APP_PIPE,
+      useValue: new ValidationPipe({ transform: true }),
+    },
+  ],
 })
 export class AppModule {}

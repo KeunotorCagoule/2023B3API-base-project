@@ -1,34 +1,37 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, ValidationPipe, UsePipes, Req, UnauthorizedException } from '@nestjs/common';
 import { ProjectUserService } from './project-user.service';
-import { CreateProjectUserDto } from './dto/create-project-user.dto';
-import { UpdateProjectUserDto } from './dto/update-project-user.dto';
+import { CreatedProjectUserDto } from './dto/create-project-user.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { UsersService } from '../users/users.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
-@Controller('project-user')
+@UseGuards(JwtAuthGuard)
+@Controller('project-users')
 export class ProjectUserController {
-  constructor(private readonly projectUserService: ProjectUserService) {}
+  constructor(private readonly projectUserService: ProjectUserService,
+    private userService: UsersService) {}
 
+  // @UseGuards(JwtAuthGuard)
+  @UsePipes(ValidationPipe)
   @Post()
-  create(@Body() createProjectUserDto: CreateProjectUserDto) {
+  async create(@Req() req, @Body() createProjectUserDto: CreatedProjectUserDto) {
+    const me = await this.userService.findUser(req.user.username);
+    if (me.role === "Employee") {
+      throw new UnauthorizedException();
+    }
     return this.projectUserService.create(createProjectUserDto);
   }
 
+  // @UseGuards(JwtAuthGuard)
   @Get()
   findAll() {
+    console.log("oui")
     return this.projectUserService.findAll();
   }
 
+  // @UseGuards(JwtAuthGuard)
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.projectUserService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateProjectUserDto: UpdateProjectUserDto) {
-    return this.projectUserService.update(+id, updateProjectUserDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.projectUserService.remove(+id);
+    return this.projectUserService.findOne(id);
   }
 }

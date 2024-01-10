@@ -1,13 +1,19 @@
-import { PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
+@Entity()
 export class ProjectUser {
-    @PrimaryGeneratedColumn('uuid')
-    public id!: string;
+  @PrimaryGeneratedColumn('uuid')
+  public id!: string;
 
-    public startDate!: Date;
-    public endDate!: Date;
+  @Column({nullable: false})
+  public startDate!: Date;
+  
+  @Column({nullable: false})
+  public endDate!: Date;
 
-    public projectId!: string;
+  @Column({nullable: false})
+  public projectId!: string;
 
-    public userId!: string;
+  @Column({nullable: false})
+  public userId!: string;
 }
