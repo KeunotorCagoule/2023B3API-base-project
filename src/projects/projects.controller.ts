@@ -3,10 +3,7 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
-  Delete,
-  Req,
   Inject,
   forwardRef,
   UnauthorizedException,
@@ -49,12 +46,16 @@ export class ProjectsController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string, @AuthUser() user: User): Promise<Project> {
+  async findOne(
+    @Param('id') id: string,
+    @AuthUser() user: User
+  ): Promise<Project> {
     const project = await this.projectsService.getById(id);
     if (!project) throw new NotFoundException();
 
     const projects = await this.projectUserService.findByUser(user);
-    if (!projects.some(p => p.projectId === project.id)) throw new ForbiddenException();
+    if (!projects.some((p) => p.projectId === project.id))
+      throw new ForbiddenException();
     return project;
   }
 }

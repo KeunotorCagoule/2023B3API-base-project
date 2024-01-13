@@ -1,34 +1,59 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, forwardRef, Inject, UnauthorizedException, NotFoundException } from '@nestjs/common';
 import { EventService } from './event.service';
 import { CreateEventDto } from './dto/create-event.dto';
-import { UpdateEventDto } from './dto/update-event.dto';
+import { AuthUser } from '../decorator/auth-user.decorator';
+import { User } from '../users/entities/user.entity';
+import { UsersService } from '../users/users.service';
+import { Events } from './entities/event.entity';
+import dayjs from 'dayjs';
 
-@Controller('event')
+
+@Controller('/events')
 export class EventController {
-  constructor(private readonly eventService: EventService) {}
+  constructor(
+    private readonly eventService: EventService,
+    @Inject(forwardRef(() => UsersService))
+    private readonly userService: UsersService
+    ) {}
 
   @Post()
-  create(@Body() createEventDto: CreateEventDto) {
-    return this.eventService.create(createEventDto);
+  async create(
+    @AuthUser() user: User,
+    @Body() dto: CreateEventDto
+    ): Promise<Events> {
+    
+    const userName = await this.userService.findByUsername(user.username);
+    const userEvents = await this.eventService.GetAllByUserId(userName.id);
+    console.table(userEvents);
+
+    if (dto.eventType === "RemoteWork") {
+      const remote = userEvents.filter(event => event.eventType === "RemoteWork");
+      if (remote.length == 2) {
+        throw new UnauthorizedException();
+      }
+      dto["eventStatus"] = "Accepted";
+    }
+
+    userEvents.forEach((event) => {
+      if (dayjs(event.date).isSame(dayjs(dto.date))) {
+        throw new UnauthorizedException();
+      }
+    });
+
+    return this.eventService.create(dto);
   }
 
   @Get()
-  findAll() {
+  async getAllEvents(@AuthUser() user: User): Promise<Events[]> {
     return this.eventService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.eventService.findOne(+id);
-  }
+  async findOne(@Param('id') id: string,
+  @AuthUser() user: User): Promise<Events> {
+    const event = await this.eventService.getById(id);
+    if (!event) throw new NotFoundException();
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateEventDto: UpdateEventDto) {
-    return this.eventService.update(+id, updateEventDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.eventService.remove(+id);
+    return event;
   }
 }

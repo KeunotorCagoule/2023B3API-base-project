@@ -5,7 +5,6 @@ import {
   Inject,
   Param,
   Post,
-  Req,
   UnauthorizedException,
   forwardRef
 } from '@nestjs/common';

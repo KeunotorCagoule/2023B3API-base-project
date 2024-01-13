@@ -1,5 +1,6 @@
 import { Exclude } from 'class-transformer';
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Events } from '../../event/entities/event.entity';
 
 export enum UserRole {
   ADMIN = 'Admin',
@@ -24,4 +25,7 @@ export class User {
 
   @Column({ default: UserRole.EMPLOYEE, nullable: false })
   readonly role?: UserRole;
+
+  @OneToMany(() => Events, event => event.user)
+    public events: Events[];
 }

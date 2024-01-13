@@ -1,17 +1,27 @@
-import { Column, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { User } from "../../users/entities/user.entity";
 
-export class Event {
-    @PrimaryGeneratedColumn('uuid')
-    public id!: string;
+@Entity()
+export class Events {
 
-    public date!: Date;
+    @PrimaryGeneratedColumn("uuid")
+    public id: string;
 
-    @Column({ default: 'Pending' })
-    public eventStatus?: 'Pending' | 'Approved' | 'Declined';
+    @Column({nullable: false})
+    public date: Date;
+
+    @Column({nullable: false, default: "Pending"})
+    public eventStatus?: 'Pending' | 'Accepted' | 'Declined'
     
-    public eventType!: 'RemoteWork' | 'PaidLeave';
-    
-    public eventDescription?: string;
+    @Column({nullable: false})
+    public eventType: 'RemoteWork' | 'PaidLeave';
 
-    public userId!: string;
+    @Column({nullable: true})
+    public eventDescription: string;
+
+    @Column({nullable: false, type: "uuid"})
+    public userId: string;
+
+    @ManyToOne(() => User, user => user.events)
+    public user: User;
 }
