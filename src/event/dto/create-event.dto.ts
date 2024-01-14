@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsUUID } from 'class-validator';
+import { IsNotEmpty } from 'class-validator';
 
 export class CreateEventDto {
   @IsNotEmpty()
@@ -8,4 +8,5 @@ export class CreateEventDto {
 
   @IsNotEmpty()
   eventType!: 'RemoteWork' | 'PaidLeave';
+
 }

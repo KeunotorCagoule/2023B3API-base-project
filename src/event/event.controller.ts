@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Param, forwardRef, Inject, UnauthorizedExc
 import { EventService } from './event.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import { AuthUser } from '../decorator/auth-user.decorator';
-import { User } from '../users/entities/user.entity';
+import { User, UserRole } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 import { Events } from './entities/event.entity';
 import dayjs from 'dayjs';
@@ -21,21 +21,23 @@ export class EventController {
     @AuthUser() user: User,
     @Body() dto: CreateEventDto
     ): Promise<Events> {
+      dto["userId"] = user.id;
     
-    const userName = await this.userService.findByUsername(user.username);
-    const userEvents = await this.eventService.GetAllByUserId(userName.id);
-    console.table(userEvents);
+    //const userName = await this.userService.findByUsername(user.username);
+    const userEvents = await this.eventService.GetAllByUserId(user.id);
+    console.table(userEvents)
 
-    if (dto.eventType === "RemoteWork") {
+    if (dto.eventType === 'RemoteWork') {
       const remote = userEvents.filter(event => event.eventType === "RemoteWork");
       if (remote.length == 2) {
+        console.table("FCHGVJKBLJOMIGYFTYXFGJ?V BJNK?L")
         throw new UnauthorizedException();
       }
       dto["eventStatus"] = "Accepted";
     }
 
-    userEvents.forEach((event) => {
-      if (dayjs(event.date).isSame(dayjs(dto.date))) {
+    userEvents.forEach(event => {
+      if (dayjs(event.date).isSame(dto.date, 'day')) {
         throw new UnauthorizedException();
       }
     });
@@ -55,5 +57,24 @@ export class EventController {
     if (!event) throw new NotFoundException();
 
     return event;
+  }
+
+  @Get("/user/:id")
+  async getId(@Param('id') id: string, @AuthUser() user: User): Promise<Events[]> {
+    console.log("user.id : ", user.id )
+    return await this.eventService.GetAllByUserId(user.id)
+  }
+
+  @Get('/:id/validate')
+  async validateEvent(@Param('id') id: string,
+  @AuthUser('role') role: UserRole): Promise<Events> {
+    if (role === 'Employee') {
+      throw new UnauthorizedException();
+    }
+    const event = await this.eventService.getById(id);
+    if (!event) throw new NotFoundException();
+
+    event.eventStatus = "Accepted";
+    return this.eventService.validate(id, event);
   }
 }
