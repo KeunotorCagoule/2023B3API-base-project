@@ -30,6 +30,10 @@ export class EventService {
     return this.eventRepository.find();
   }
 
+  async findOneById(id: string): Promise<Events> {
+    return await this.eventRepository.findOne({ where: { id: id } });
+  }
+
   async GetAllByUserId(id: string): Promise<Events[]> {
     const userEvents = await this.eventRepository.find({
       where: {
@@ -43,12 +47,15 @@ export class EventService {
     return this.eventRepository.findOneBy({ id });
   }
 
-  async validate(id: string, dto: CreateEventDto): Promise<Events> {
-    const event = await this.getById(id);
-    if (!event) {
-      throw new NotFoundException();
-    }
+  async validate(id: string): Promise<Events> {
+    const event = await this.findOneById(id);
+    event.eventStatus = "Accepted";
+    return event;
+  }
 
-    return this.eventRepository.save({ ...event, ...dto });
+  async decline(id: string): Promise<Events> {
+    const event = await this.findOneById(id);
+    event.eventStatus = "Declined";
+    return event;
   }
 }

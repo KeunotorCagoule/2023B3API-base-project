@@ -59,4 +59,10 @@ export class UsersController {
     if (!user) throw new NotFoundException();
     return user;
   }
+
+  @Get(':id/meal-vouchers/:month')
+  async getMealVouchers(@Param('id') id: string,
+  @Param('mounth') mounth: string){
+    
+  }
 }

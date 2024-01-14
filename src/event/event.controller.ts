@@ -25,7 +25,6 @@ export class EventController {
     
     //const userName = await this.userService.findByUsername(user.username);
     const userEvents = await this.eventService.GetAllByUserId(user.id);
-    console.table(userEvents)
 
     if (dto.eventType === 'RemoteWork') {
       const remote = userEvents.filter(event => event.eventType === "RemoteWork");
@@ -65,16 +64,33 @@ export class EventController {
     return await this.eventService.GetAllByUserId(user.id)
   }
 
-  @Get('/:id/validate')
+  @Post(':id/validate')
   async validateEvent(@Param('id') id: string,
-  @AuthUser('role') role: UserRole): Promise<Events> {
-    if (role === 'Employee') {
-      throw new UnauthorizedException();
-    }
+  @AuthUser() user: User): Promise<Events> {
     const event = await this.eventService.getById(id);
     if (!event) throw new NotFoundException();
 
+    if (user.role === UserRole.EMPLOYEE || event.eventStatus !== "Pending") {
+      throw new UnauthorizedException();
+    }
+
+    if (user.role === UserRole.PROJECT_MANAGER) {
+       
+    }
     event.eventStatus = "Accepted";
-    return this.eventService.validate(id, event);
+    return this.eventService.validate(event.id);
+  }
+
+  @Post(':id/decline')
+  async declineEvent(@Param('id') id: string,
+  @AuthUser() user: User): Promise<Events> {
+    const event = await this.eventService.getById(id);
+    if (!event) throw new NotFoundException();
+
+    if (user.role === UserRole.EMPLOYEE || event.eventStatus !== "Pending") {
+      throw new UnauthorizedException();
+    }
+    event.eventStatus = "Accepted";
+    return this.eventService.decline(event.id);
   }
 }
